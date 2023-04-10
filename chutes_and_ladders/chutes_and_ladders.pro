@@ -11,14 +11,17 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    namediag.cpp \
     playerdiag.cpp
 
 HEADERS += \
     mainwindow.h \
+    namediag.h \
     playerdiag.h
 
 FORMS += \
     mainwindow.ui \
+    namediag.ui \
     playerdiag.ui
 
 # Default rules for deployment.
