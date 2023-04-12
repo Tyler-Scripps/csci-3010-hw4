@@ -17,8 +17,19 @@ MainWindow::MainWindow(QWidget *parent)
     nd->exec();
 
     for (int i = 0; i < pd->getNumPlayers(); i++) {
-        Player tempPlayer = {nd->getNames().at(i), 0};
+        Player tempPlayer;
+        tempPlayer.name = nd->getNames().at(i);
+        tempPlayer.currentTile = 0;
+        tempPlayer.points = 0;
+//        tempPlayer.color = QColor(rand()%256,rand()%256,rand()%256);
+        tempPlayer.numUndo = 0;
         players.push_back(tempPlayer);
+
+        Position tempPos = cellNumToPos(1);
+        pawn * tempPawn = new pawn(QColor(rand()%256,rand()%256,rand()%256), tempPos.x - 20 + 10*i, tempPos.y);
+
+        pawns.push_back(tempPawn);
+//        qDebug() << pawns.at(i)->getX() << "," << pawns.at(i)->getY();
     }
     ui->playerLabel->setText(QString(("Active Player:\n" + players.at(0).name).c_str()));
 
@@ -79,11 +90,11 @@ Position MainWindow::cellNumToPos(int num) {
     int ySpacing = view->frameSize().height()/10;
     int xSpacing = view->frameSize().width()/10;
     int x;
-    int y = view->frameSize().height() - ySpacing * (int)(100/num);
+    int y = view->frameSize().height() - ySpacing * num%10 - ySpacing/2;
     if(num%20 < 10) {   //left to right row
-        x = num % 10 * xSpacing;
-    } else {            //right ot left row
-        x = view->frameSize().width() - num % 10 * xSpacing;
+        x = num % 10 * xSpacing - xSpacing/2;
+    } else {            //right to left row
+        x = view->frameSize().width() - num % 10 * xSpacing - xSpacing/2;
     }
     return Position() = {x, y};
 }
@@ -155,7 +166,7 @@ void MainWindow::generateChutes() {
         //start point
         int startX = rand()%10; //0-9
         int startY = rand()%9 + 1;  //1-9
-        while(tileUsed(startX, startY)) {
+        while(tileUsed(startX, startY) || (startX == 0 && startY == 9)) {
             startX = rand()%10; //0-9
             startY = rand()%9 + 1;  //1-9
         }
@@ -252,6 +263,10 @@ int MainWindow::rollDie() {
 
 void MainWindow::on_rollBut_clicked()
 {
+    if(!gameRunning){
+        return;
+    }
+
     if(!players.at(activePlayer_).rolledForTurn) {
         rollDie();
         players.at(activePlayer_).rolledForTurn = true;
@@ -267,14 +282,62 @@ void MainWindow::on_moveBut_clicked()
 
     //tile not on board
     if(players.at(activePlayer_).currentTile == -1 && players.at(activePlayer_).currentRoll == 6) {
+//        qDebug() << pawns.at(activePlayer_)->getX();
+        scene->addItem(pawns.at(activePlayer_));
+    } else if (players.at(activePlayer_).currentTile > 0 && players.at(activePlayer_).currentRoll > 0) {
+        //move pawn
+        for (int i = 0; i < players.at(activePlayer_).currentRoll; i++) {
+            players.at(activePlayer_).currentTile++;
+            //check if landed on ladder start
+            int ladder = -1;
+            for(int i = 0; i < 7; i++) {
+                if(cellPosToNum(Position() = {ladders[i][0][0], ladders[i][0][1]}) == players.at(activePlayer_).currentTile) {
+                    ladder = i;
+                    break;
+                }
+            }
+            //check if landed on chute start
+            int chute = -1;
+            for(int i = 0; i < 7; i++) {
+                if(cellPosToNum(Position() = {chutes[i][0][0], chutes[i][0][1]}) == players.at(activePlayer_).currentTile) {
+                    chute = i;
+                    break;
+                }
+            }
 
+            if(ladder > -1) {
+
+            } else if (chute > -1) {
+
+            }
+        }
+        //reset dice values
+        //reset current roll
     }
 }
 
 
 void MainWindow::on_startBut_clicked()
 {
-    gameRunning = true;
-    activePlayer_ = 0;
+    if(!gameRunning){
+        gameRunning = true;
+        activePlayer_ = 0;
+        for (unsigned int i = 0; i < players.size(); i++) {
+            players.at(i).currentTile = -1;
+            players.at(i).rolledForTurn = false;
+        }
+    }
+}
+
+void MainWindow::on_rerollBut_clicked()
+{
+    if(!gameRunning || !players.at(activePlayer_).rolledForTurn){
+        qDebug() << "not rerolling";
+        return;
+    }
+
+    if(players.at(activePlayer_).rerolls <= 5) {
+        rollDie();
+    }
 }
 

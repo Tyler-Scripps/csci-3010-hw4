@@ -7,6 +7,7 @@
 
 #include "playerdiag.h"
 #include "namediag.h"
+#include "pawn.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,12 +17,14 @@ struct Player {
     std::string name = "";
     int points = 0;
     int numUndo = 0;
-//    int currentTile[2] = {-1,-1};
-//    int prevTile[2] = {-1,-1};
     int currentTile = -1;
     int prevTile = -1;
     int currentRoll;
     bool rolledForTurn = false;
+    int rerolls = 0;
+//    QColor color;
+//    pawn * playerPawn;
+
 };
 
 struct Position {
@@ -39,6 +42,9 @@ public:
 
 private slots:
     void on_rollBut_clicked();
+    void on_moveBut_clicked();
+    void on_startBut_clicked();
+    void on_rerollBut_clicked();
 
 private:
     Ui::MainWindow *ui;
@@ -60,6 +66,7 @@ private:
 
     std::vector<Player> players;
     int activePlayer_ = 0;
+    std::vector<pawn *> pawns;
 
     int rollDie();
 

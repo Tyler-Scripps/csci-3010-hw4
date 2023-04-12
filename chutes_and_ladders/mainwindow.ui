@@ -76,16 +76,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="rerollBut">
+      <widget class="QPushButton" name="rollBut">
        <property name="text">
-        <string>Re-Roll</string>
+        <string>Roll</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="rollBut">
+      <widget class="QPushButton" name="rerollBut">
        <property name="text">
-        <string>Roll</string>
+        <string>Re-Roll</string>
        </property>
       </widget>
      </item>
@@ -138,7 +138,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Die 1 Value</string>
+        <string>Die 2 Value</string>
        </property>
       </widget>
      </item>

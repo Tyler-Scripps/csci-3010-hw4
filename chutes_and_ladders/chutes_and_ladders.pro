@@ -12,11 +12,13 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     namediag.cpp \
+    pawn.cpp \
     playerdiag.cpp
 
 HEADERS += \
     mainwindow.h \
     namediag.h \
+    pawn.h \
     playerdiag.h
 
 FORMS += \
