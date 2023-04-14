@@ -1,5 +1,14 @@
 #include "mainwindow.h"
+#include "qdatetime.h"
 #include "ui_mainwindow.h"
+
+//retrieved from: https://stackoverflow.com/questions/3752742/how-do-i-create-a-pause-wait-function-using-qt
+void delay(unsigned int millis)
+{
+    QTime dieTime= QTime::currentTime().addMSecs(millis);
+    while (QTime::currentTime() < dieTime)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -90,11 +99,11 @@ Position MainWindow::cellNumToPos(int num) {
     int ySpacing = view->frameSize().height()/10;
     int xSpacing = view->frameSize().width()/10;
     int x;
-    int y = view->frameSize().height() - ySpacing * num%10 - ySpacing/2;
-    if(num%20 < 10) {   //left to right row
-        x = num % 10 * xSpacing - xSpacing/2;
+    int y = view->frameSize().height() - ySpacing * ((num-1) / 10) - ySpacing/2;
+    if(num%20 < 11) {   //left to right row
+        x = num % 11 * xSpacing - xSpacing/2;
     } else {            //right to left row
-        x = view->frameSize().width() - num % 10 * xSpacing - xSpacing/2;
+        x = view->frameSize().width() - (num-1) % 10 * xSpacing - xSpacing/2;
     }
     return Position() = {x, y};
 }
@@ -230,6 +239,7 @@ void MainWindow::drawChutes() {
         int endX = chutes[i][1][0] * xSpacing + xSpacing/2;
         int endY = view->frameSize().height() - (chutes[i][1][1] * ySpacing + ySpacing/2);
 
+        // purple
         scene->addLine(startX, startY, endX, endY, QPen(QColor(243,23,143)));
     }
 }
@@ -248,6 +258,7 @@ void MainWindow::drawLadders() {
         int endX = ladders[i][1][0] * xSpacing + xSpacing/2;
         int endY = view->frameSize().height() - (ladders[i][1][1] * ySpacing + ySpacing/2);
 
+        // green
         scene->addLine(startX, startY, endX, endY, QPen(QColor(34,162,15)));
     }
 }
@@ -279,41 +290,79 @@ void MainWindow::on_moveBut_clicked()
     if(!gameRunning){
         return;
     }
+    qDebug() << "roll value:" << players.at(activePlayer_).currentRoll;
 
     //tile not on board
     if(players.at(activePlayer_).currentTile == -1 && players.at(activePlayer_).currentRoll == 6) {
 //        qDebug() << pawns.at(activePlayer_)->getX();
+        qDebug() << "tile not on board";
+        players.at(activePlayer_).currentTile = 1;
         scene->addItem(pawns.at(activePlayer_));
-    } else if (players.at(activePlayer_).currentTile > 0 && players.at(activePlayer_).currentRoll > 0) {
+        ui->die1Label->setText("Die 1 Value");
+        ui->die2Label->setText("Die 2 Value");
+    } else if (players.at(activePlayer_).currentTile > 0 && players.at(activePlayer_).currentRoll > 0) { //tile on board
         //move pawn
+//        qDebug() << "tile on board";
+        qDebug() << "moving to" << players.at(activePlayer_).currentRoll + players.at(activePlayer_).currentTile;
         for (int i = 0; i < players.at(activePlayer_).currentRoll; i++) {
             players.at(activePlayer_).currentTile++;
             //check if landed on ladder start
-            int ladder = -1;
-            for(int i = 0; i < 7; i++) {
-                if(cellPosToNum(Position() = {ladders[i][0][0], ladders[i][0][1]}) == players.at(activePlayer_).currentTile) {
-                    ladder = i;
-                    break;
-                }
-            }
-            //check if landed on chute start
-            int chute = -1;
-            for(int i = 0; i < 7; i++) {
-                if(cellPosToNum(Position() = {chutes[i][0][0], chutes[i][0][1]}) == players.at(activePlayer_).currentTile) {
-                    chute = i;
-                    break;
-                }
-            }
-
-            if(ladder > -1) {
-
-            } else if (chute > -1) {
-
+            scene->removeItem(pawns.at(activePlayer_));
+            Position tempPos = cellNumToPos(players.at(activePlayer_).currentTile);
+            qDebug() << "new tile:" << players.at(activePlayer_).currentTile;
+            qDebug() << "new pos:" << tempPos.x << "," << tempPos.y;
+            pawns.at(activePlayer_)->setXY(tempPos.x, tempPos.y);
+            scene->addItem(pawns.at(activePlayer_));
+            delay(500);
+        }
+        int ladder = -1;
+        for(int j = 0; j < 7; j++) {
+            if(cellPosToNum(Position() = {ladders[j][0][0], ladders[j][0][1]}) == players.at(activePlayer_).currentTile) {
+                ladder = j;
+                break;
             }
         }
-        //reset dice values
+        //check if landed on chute start
+        int chute = -1;
+        for(int j = 0; j < 7; j++) {
+            if(cellPosToNum(Position() = {chutes[j][0][0], chutes[j][0][1]}) == players.at(activePlayer_).currentTile) {
+                chute = j;
+                break;
+            }
+        }
+
+        if(ladder > -1) {   //landed at base of ladder
+            qDebug() << "moving to:" << cellPosToNum(Position() = {ladders[ladder][1][0], ladders[ladder][1][1]});
+            players.at(activePlayer_).currentTile = cellPosToNum(Position() = {ladders[ladder][1][0], ladders[ladder][1][1]});
+        } else if (chute > -1) {    //landed at top of chute
+            qDebug() << "moving to:" << cellPosToNum(Position() = {chutes[chute][1][0], chutes[chute][1][1]});
+            players.at(activePlayer_).currentTile = cellPosToNum(Position() = {chutes[ladder][1][0], chutes[ladder][1][1]});
+        }
+
+        scene->removeItem(pawns.at(activePlayer_));
+        Position tempPos = cellNumToPos(players.at(activePlayer_).currentTile);
+        pawns.at(activePlayer_)->setXY(tempPos.x, tempPos.y);
+        scene->addItem(pawns.at(activePlayer_));
+
         //reset current roll
+        players.at(activePlayer_).rolledForTurn = false;
+        players.at(activePlayer_).currentRoll = -1;
     }
+    players.at(activePlayer_).currentRoll = -1;
+    players.at(activePlayer_).rolledForTurn = false;
+
+    //finally increment activeplayer_
+    activePlayer_++;
+    if(activePlayer_ >= players.size()) {
+        activePlayer_ = 0;
+    }
+
+    //reset dice values
+    ui->die1Label->setText("Die 1 Value");
+    ui->die2Label->setText("Die 2 Value");
+
+    //show active player
+    ui->playerLabel->setText(QString(("Active Player:\n" + players.at(activePlayer_).name).c_str()));
 }
 
 
@@ -336,8 +385,43 @@ void MainWindow::on_rerollBut_clicked()
         return;
     }
 
-    if(players.at(activePlayer_).rerolls <= 5) {
+    if(players.at(activePlayer_).rerolls < 5) {
         rollDie();
+        players.at(activePlayer_).rerolls++;
     }
+}
+
+
+void MainWindow::on_newBut_clicked()
+{
+    activePlayer_ = 0;
+    for (unsigned int i = 0; i < players.size(); i++) {
+        players.at(i).currentRoll = -1;
+        players.at(i).currentTile = -1;
+        players.at(i).rerolls = 0;
+        players.at(i).prevTile = -1;
+        players.at(i).numUndo = 0;
+
+        Position tempPos = cellNumToPos(1);
+//        pawn * tempPawn = new pawn(QColor(rand()%256,rand()%256,rand()%256), tempPos.x - 20 + 10*i, tempPos.y);
+
+        pawns.at(i)->setXY(tempPos.x-20+10*i, tempPos.y);
+        scene->removeItem(pawns.at(i));
+    }
+
+    gameRunning = false;
+
+    //reset dice values
+    ui->die1Label->setText("Die 1 Value");
+    ui->die2Label->setText("Die 2 Value");
+
+    //show active player
+    ui->playerLabel->setText(QString(("Active Player:\n" + players.at(activePlayer_).name).c_str()));
+}
+
+
+void MainWindow::on_quitBut_clicked()
+{
+    this->close();
 }
 

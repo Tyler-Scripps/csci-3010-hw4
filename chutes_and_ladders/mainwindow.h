@@ -46,6 +46,10 @@ private slots:
     void on_startBut_clicked();
     void on_rerollBut_clicked();
 
+    void on_newBut_clicked();
+
+    void on_quitBut_clicked();
+
 private:
     Ui::MainWindow *ui;
     QGraphicsScene* scene;
